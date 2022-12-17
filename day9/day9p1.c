@@ -5,13 +5,11 @@
 
 int main() {
 
-    char** map = malloc(START_SIZE*sizeof(char*));
+    int** map = malloc(START_SIZE*sizeof(int*));
     for (int i = 0; i < START_SIZE; i++) {
-        map[i] = malloc(START_SIZE*sizeof(char));
-        for (int j = 0; j < START_SIZE; j++) {
-            map[i][j] = '\0';
-        }
+        map[i] = calloc(START_SIZE, sizeof(int));
     }
+    map[512][512] = 1;
 
     int hx = 512;
     int hy = 512;
@@ -25,33 +23,17 @@ int main() {
         char* iterations = strtok(buf, " ");
         iterations = strtok(NULL, " ");
 
-        if (buf[0] == 'L') {
-            for (int i = 0; i < atoi(iterations); i++) {
+        for (int i = 0; i < atoi(iterations); i++) {
+            if (buf[0] == 'L') {
                 hx--;
-                printf("%d %d\n", abs(hx - tx), abs(hy - ty));
                 if (abs(hx - tx) > 1) {
                     tx--;
                     if (hy != ty) {
                         ty = hy;
                     }
                 }
-                map[tx][ty] = 1;
-            }
 
-        } else if (buf[0] == 'U') {
-            for (int i = 0; i < atoi(iterations); i++) {
-                hy++;
-                if (abs(hy - ty) > 1) {
-                    ty++;
-                    if (hx != tx) {
-                        tx = hx;
-                    }
-                }
-                map[tx][ty] = 1;
-            }
-
-        } else if (buf[0] == 'R') {
-            for (int i = 0; i < atoi(iterations); i++) {
+            } else if (buf[0] == 'R') {
                 hx++;
                 if (abs(hx - tx) > 1) {
                     tx++;
@@ -59,11 +41,17 @@ int main() {
                         ty = hy;
                     }
                 }
-                map[tx][ty] = 1;
-            }
 
-        } else if (buf[0] == 'D') {
-            for (int i = 0; i < atoi(iterations); i++) {
+            } else if (buf[0] == 'U') {
+                hy++;
+                if (abs(hy - ty) > 1) {
+                    ty++;
+                    if (hx != tx) {
+                        tx = hx;
+                    }
+                }
+
+            } else if (buf[0] == 'D') {
                 hy--;
                 if (abs(hy - ty) > 1) {
                     ty--;
@@ -71,16 +59,18 @@ int main() {
                         tx = hx;
                     }
                 }
-                map[tx][ty] = 1;
             }
-        } 
+            map[tx][ty] = 1;
+        }
     }
 
-    int count = 1;
+    int count = 0;
 
     for (int i = 0; i < START_SIZE; i++) {
         for (int j = 0; j < START_SIZE; j++) {
-            count = map[i][j] == 1 ? count + 1 : count;
+            if (map[i][j] == 1) {
+                count++;
+            }
         }
     }
 
