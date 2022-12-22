@@ -71,51 +71,62 @@ int main() {
 
                 int lim = dist - (abs(y_lev-sensors[i][1]));
 
-                if (sensors[i][0]-lim > xy_lim || sensors[i][1]-lim > xy_lim) {
+                if (sensors[i][0]+lim < 0 || lim < 0 ||
+                    sensors[i][0]-lim >= xy_lim) {
                     continue;
                 }
-                values = realloc(values, sizeof(int*)*++num_values);
-                values[num_values-1] = malloc(sizeof(int)*2);
-                values[num_values-1][0] = sensors[i][0]-lim;
-                values[num_values-1][1] = sensors[i][0]+lim;
-                values[num_values-1][0] = values[num_values-1][0] < 0 ? 0 : values[num_values-1][0];
-                values[num_values-1][1] = values[num_values-1][1] < 0 ? 0 : values[num_values-1][1];
-                values[num_values-1][1] = values[num_values-1][1] > xy_lim ? xy_lim : values[num_values-1][1];
-                values[num_values-1][0] = values[num_values-1][0] > xy_lim ? xy_lim : values[num_values-1][0];
-            }
-        }
+                int val = 1;
 
-        for (int i = 0; i < num_values; i++) {
-            for (int j = 0; j < num_values; j++) {
-                if (values[i][0] <= values[j][0] && values[i][1] >= values[j][1]) {
+                int l0 = sensors[i][0]-lim < 0 ? 0 : sensors[i][0]-lim;
+                int l1 = sensors[i][0]+lim >= xy_lim ? xy_lim-1 : sensors[i][0]+lim;
 
-                    values[j][0] = values[i][0];
-                    values[j][1] = values[i][1];
+                for (int j = 0; j < num_values; j++) {
+                    if (l0 <= values[j][0] && l1 >= values[j][1]) {
 
-                } else if (values[i][0] <= values[j][0] && values[i][1] <= values[j][1] 
-                    && values[i][1] >= values[j][0]) {
+                        values[j][0] = l0;
+                        values[j][1] = l1;
+                        val = 0;
 
-                    values[j][0] = values[i][0];
-                    values[i][1] = values[j][1];
+                    } else if (l0 >= values[j][0] && l1 <= values[j][1]) {
 
-                } else if (values[i][1] >= values[j][1] && values[i][0] <= values[j][1] 
-                    && values[i][0] >= values[j][0]) {
+                        val = 0;
+                        
+                    } else if (l0 <= values[j][0] && l1 <= values[j][1] 
+                        && l1 >= values[j][0]) {
 
-                    values[j][1] = values[i][1];
-                    values[i][0] = values[j][0];
+                        values[j][0] = l0;
+                        val = 0;
 
-                } else if (values[i][1] == values[j][0]) {
-                    
-                    values[j][0] = values[i][0];
-                    values[i][1] = values[j][1];
+                    } else if (l1 >= values[j][1] && l0 <= values[j][1] 
+                        && l0 >= values[j][0]) {
 
-                }  else if (values[i][0] == values[j][1]) {
-                    
-                    values[i][0] = values[j][0];
-                    values[j][1] = values[i][1];
+                        values[j][1] = l1;
+                        val = 0;
+
+                    } else if (l1 == values[j][0]) {
+                        
+                        values[j][0] = l0;
+                        val = 0;
+
+                    }  else if (l0 == values[j][1]) {
+                        
+                        values[j][1] = l1;
+                        val = 0;
+                    }
+                }
+                if (val) {
+                    values = realloc(values, sizeof(int*)*++num_values);
+                    values[num_values-1] = malloc(sizeof(int)*2);
+                    values[num_values-1][0] = l0;
+                    values[num_values-1][1] = l1;
+                    values[num_values-1][0] = values[num_values-1][0] < 0 ? 0 : values[num_values-1][0];
+                    values[num_values-1][1] = values[num_values-1][1] < 0 ? 0 : values[num_values-1][1];
+                    values[num_values-1][1] = values[num_values-1][1] > xy_lim ? xy_lim : values[num_values-1][1];
+                    values[num_values-1][0] = values[num_values-1][0] > xy_lim ? xy_lim : values[num_values-1][0];
                 }
             }
         }
+
 
         int* at_read = malloc(sizeof(int)*num_sensors);
         int read_count = 0;
@@ -139,7 +150,7 @@ int main() {
         int to_subtract = 0;
 
         for (int i = 0; i < read_count; i++) {
-            if (at_read[i] > values[0][0] && at_read[i] < values[0][1]) {
+            if (at_read[i] >= values[0][0] && at_read[i] <= values[0][1]) {
                 to_subtract++;
             }
         }
@@ -165,8 +176,8 @@ int main() {
         for (int i = 0; i < val_count; i++) {
 
             if (val_count > 1) {
-                printf("%d %d %d\n", y_lev, values_f[i][0], values[i][1]);
-                printf("\n");
+                printf("%d: ", y_lev);
+                printf("%d -> %d\n", values_f[i][0], values[i][1]);
             }
         }
         for (int i = 0; i < val_count; i++) {
