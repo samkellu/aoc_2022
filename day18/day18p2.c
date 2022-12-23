@@ -6,17 +6,6 @@ int main() {
     char buf[64];
     FILE* fp = fopen("day18.in", "r");
 
-    int x_dim = 50;
-    int y_dim = 50;
-    int z_dim = 50;
-    int*** coords = malloc(x_dim*sizeof(int**));
-    for (int i = 0; i < x_dim; i++) {
-        coords[i] = malloc(y_dim*sizeof(int*));
-        for (int j = 0; j < y_dim; j++) {
-            coords[i][j] = calloc(z_dim, sizeof(int));
-        }
-    }
-
     int** positions = malloc(sizeof(int*) * 6);
     for (int i = 0; i < 6; i++) {
         positions[i] = malloc(sizeof(int)*3);
@@ -46,121 +35,111 @@ int main() {
     positions[5][1] = -1;
     positions[5][2] = 0;
 
+    int x_dim = 0;
+    int y_dim = 0;
+    int z_dim = 0;
+
+    int num_values = 0;
+    int** values = malloc(sizeof(int*) * 0);
+
     while (fgets(buf, 64, fp)) {
-        coords[atoi(strtok(buf, ","))][atoi(strtok(NULL, ","))][atoi(strtok(NULL, ","))] = 1;
+        
+        values = realloc(values, sizeof(int*) * ++num_values);
+        values[num_values-1] = malloc(sizeof(int)*3);
+
+        values[num_values-1][0] = atoi(strtok(buf, ",")) + 1;
+        values[num_values-1][1] = atoi(strtok(NULL, ",")) + 1;
+        values[num_values-1][2] = atoi(strtok(NULL, ",")) + 1;
+
+        x_dim = values[num_values-1][0] + 3 > x_dim ? values[num_values-1][0] + 3 : x_dim;
+        y_dim = values[num_values-1][1] + 3 > y_dim ? values[num_values-1][1] + 3 : y_dim;
+        z_dim = values[num_values-1][2] + 3 > z_dim ? values[num_values-1][2] + 3: z_dim;
     }
     fclose(fp);
 
-    for (int z = 0; z < 50; z++) {
-        for (int u = 0; u < z_dim; u++) {
-            for (int i = 0; i < x_dim; i++) {
-                for (int j = 0; j < y_dim; j++) {
-                    if (coords[i][j][u] == 0) {
-                        int v1, v2, v3, v4, v5, v6;
-                        v1 = v2 = v3 = v4 = v5 = v6 = 0;
-                        for (int l = i; l < x_dim; l++) {
-                            if (coords[l][j][u] == 1) {
-                                v1 = 1;
-                                break;
-                            }
-                        }
-                        for (int l = i; l >= 0; l--) {
-                            if (coords[l][j][u] == 1) {
-                                v2 = 1;
-                                break;
-                            }
-                        }
-                        for (int l = j; l >= 0; l--) {
-                            if (coords[i][l][u] == 1) {
-                                v3 = 1;
-                                break;
-                            }
-                        }
-                        for (int l = j; l < y_dim; l++) {
-                            if (coords[i][l][u] == 1) {
-                                v4 = 1;
-                                break;
-                            }
-                        }
-                        for (int l = j; l >= 0; l--) {
-                            if (coords[i][j][l] == 1) {
-                                v5 = 1;
-                                break;
-                            }
-                        }
-                        for (int l = j; l < z_dim; l++) {
-                            if (coords[i][j][l] == 1) {
-                                v6 = 1;
-                                break;
-                            }
-                        }
-                        if (v1 && v2 && v3 && v4 && v5 && v6) {
-                            printf("%d %d %d: %d %d %d %d %d %d\n", i, j, u, v1, v2, v3, v4, v5, v6);
-                            coords[i][j][u] = 1;
-
-                            // for (int l = i; l < x_dim; l++) {
-                            //     if (coords[l][j][u] == 1) {
-                            //         break;
-                            //     }
-                            //     coords[l][j][u] = 1;
-                            // }
-                                
-                            // for (int l = i; l >= 0; l--) {
-                            //     if (coords[l][j][u] == 1) {
-                            //         break;
-                            //     }
-                            //     coords[l][j][u] = 1;
-                            // }
-                            // for (int l = j; l >= 0; l--) {
-                            //     if (coords[i][l][u] == 1) {
-                            //         break;
-                            //     }
-                            //     coords[i][l][u] = 1;
-                            // }
-                            // for (int l = j; l < y_dim; l++) {
-                            //     if (coords[i][l][u] == 1) {
-                            //         break;
-                            //     }
-                            //     coords[i][l][u] = 1;
-                            // }
-                            // for (int l = j; l >= 0; l--) {
-                            //     if (coords[i][j][l] == 1) {
-                            //         break;
-                            //     }
-                            //     coords[i][j][l] = 1;
-                            // }
-                            // for (int l = j; l < z_dim; l++) {
-                            //     if (coords[i][j][l] == 1) {
-                            //         break;
-                            //     }
-                            //     coords[i][j][l] = 1;
-                            // }
-                        }
-                    }
-                }
-            }
+    int*** coords = malloc(x_dim*sizeof(int**));
+    for (int i = 0; i < x_dim; i++) {
+        coords[i] = malloc(y_dim*sizeof(int*));
+        for (int j = 0; j < y_dim; j++) {
+            coords[i][j] = calloc(z_dim, sizeof(int));
         }
     }
+
+    for (int i = 0; i < num_values; i++) {
+        coords[values[i][0]][values[i][1]][values[i][2]] = 1;
+        free(values[i]);
+    }
+    free(values);
+
+    // BFS to find all cubes of air, run SA calculation during traverse
+
+    int** visited = malloc(0);
+    int num_visited = 0;
+    int** queue = malloc(sizeof(int*));
+    int queue_end = 1;
+    int queue_start = 0;
+    queue[0] = malloc(sizeof(int) * 3);
+    queue[0][0] = 0;
+    queue[0][1] = 0;
+    queue[0][2] = 0;
 
     int total_area = 0;
-    for (int i = 0; i < x_dim; i++) {
-        for (int j = 0; j < y_dim; j++) {
-            for (int u = 0; u < z_dim; u++) {
-                if (coords[i][j][u] == 1) {
-                    int count = 6;
-                    for (int k = 0; k < 6; k++) {
-                        if (i != 0 && i != x_dim-1 && j != 0 && j != y_dim-1 && u != 0 && u != z_dim-1) {
-                            if (coords[i+positions[k][0]][j+positions[k][1]][u+positions[k][2]] == 1) {
 
-                                count--;
-                            }
-                        }
+    while (queue_start != queue_end) {
+        
+        visited = realloc(visited, sizeof(int*) * ++num_visited);
+        visited[num_visited-1] = malloc(sizeof(int) * 3);
+        visited[num_visited-1][0] = queue[queue_start][0];
+        visited[num_visited-1][1] = queue[queue_start][1];
+        visited[num_visited-1][2] = queue[queue_start][2];
+
+        for (int i = 0; i < 6; i++) {
+            int x_pos, y_pos, z_pos;
+
+            x_pos = queue[queue_start][0]+positions[i][0];
+            y_pos = queue[queue_start][1]+positions[i][1];
+            z_pos = queue[queue_start][2]+positions[i][2];
+
+            if (x_pos < 0 || x_pos >= x_dim || y_pos < 0 || y_pos >= y_dim || z_pos < 0 || z_pos >= z_dim) {
+                continue;
+            }
+
+            if (coords[x_pos][y_pos][z_pos] == 1) {
+                total_area++;
+            } else {
+
+                int valid = 1;
+                for (int j = 0; j < num_visited; j++) {
+                    if (visited[j][0] == x_pos && visited[j][1] == y_pos && visited[j][2] == z_pos) {
+                        valid = 0;
+                        break;
                     }
-                    total_area += count;
+                }
+                for (int j = queue_start; j < queue_end; j++) {
+                    if (queue[j][0] == x_pos && queue[j][1] == y_pos && queue[j][2] == z_pos) {
+                        valid = 0;
+                        break;
+                    }
+                }
+
+                if (valid) {
+                    queue = realloc(queue, sizeof(int*) * ++queue_end);
+                    queue[queue_end-1] = malloc(sizeof(int) * 3);
+                    queue[queue_end-1][0] = x_pos;
+                    queue[queue_end-1][1] = y_pos;
+                    queue[queue_end-1][2] = z_pos;
                 }
             }
         }
+        free(queue[queue_start++]);
     }
+
+    free(queue);
+
+    for (int i = 0; i < num_visited; i++) {
+        free(visited[i]);
+    }
+    free(visited);
 
     for (int i = 0; i < x_dim; i++) {
         for (int j = 0; j < y_dim; j++) {

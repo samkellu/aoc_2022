@@ -80,7 +80,6 @@ int main() {
             if (queue[cursor][0] == end[0] && queue[cursor][1] == end[1]) {
                 printf("done %d\n", layer);
                 min = (layer < min || min == -1) ? layer : min;
-                // break;
             }
 
             vis[queue[cursor][0]][queue[cursor][1]] = 1;
